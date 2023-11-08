@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>Crash Prediction</title>
+</head>
+<body>
+  <div id="app">
+    <button @click="predict">تنبؤ</button>
+    <div id="chart"></div>
+    <div id="time-label"></div>
+    <div id="probability-label"></div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.14/vue.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chart.js/2.9.4/Chart.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/progressbar.js/2.0.0/progressbar.min.js"></script>
+  <script>
+    const app = new Vue({
+      el: "#app",
+      data: {
+        url: "https://1xbet.com/crash/egypt/",
+        data: [],
+        crashPoint: null,
+      },
+      methods: {
+        predict() {
+          // Get the data from the game
+          const data = await fetch(this.url).then((response) => response.json());
+
+          // Update the data
+          this.data = data;
+
+          // Predict the crash point
+          this.crashPoint = predict(data);
+
+          // Update the time label
+          const hours = Math.floor(this.crashPoint / data.multiplier);
+          const minutes = this.crashPoint % data.multiplier;
+          document.getElementById("time-label").textContent = `الوقت المتوقع للانهيار: ${hours}:${minutes}`;
+
+          // Update the probability label
+          const probability = predictProbability(data.growth[data.growth.length - 1], data.growth[data.growth.length - 2], data.time);
+          document.getElementById("probability-label").textContent = `احتمالية الانهيار: ${probability}`;
+        },
+      },
+    });
+
+    // Define a function to predict the crash point
+    function predict(data) {
+      // Create a linear regression model
+      const model = new LinearRegression();
+
+      // Fit the model on the data
+      model.fit(data.growth, data.crash);
+
+      // Predict the crash point
+      return model.predict(data.growth[data.growth.length - 1]);
+    }
+
+    // Define a function to predict the crash probability
+    function predictProbability(growth, previousGrowth, time) {
+      // Create a linear regression model
+      const model = new LinearRegression();
+
+      // Fit the model on the data
+      const data = [
+        {
+          growth: growth,
+          previousGrowth: previousGrowth,
+          time: time,
+          crash: crash,
+        },
+      ];
+      model.fit(data.growth, data.crash);
+
+      // Predict the probability
+      return model.predict(growth, previousGrowth, time);
+    }
+
+    // Create a linear regression model
+    const model = new LinearRegression();
+
+    // Add a feature to display the predicted crash probability
+    const probabilityLabel = document.getElementById("probability-label");
+
+    app.watch(() => app.data.crashPoint, (crashPoint) => {
+      const probability = predictProbability(data.growth[data.growth.length - 1], data.growth[data.growth.length - 2], data.time);
+      probabilityLabel.textContent = `احتمالية الانهيار: ${probability}`;
+    });
+  </script>
+</body>
+</html>
